@@ -1,71 +1,74 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Assignment6View;
 
-import javax.swing.*;
+import Assignment6Controller.CustomerDTO;
+import Assignment6Model.BankCustomer;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
+import javax.swing.*;
 
 /**
  *
  * @author karunmehta
  */
 public class HomePage extends JFrame implements ActionListener {
-    
-    JButton jbSearch, jbAdd, jbRemove, jbUpdate;
-    
+
+    JButton jbSearch, jbAdd, jbShowAll;
+
     HomePage() {
-    
         setLayout(null);
-        
-        //create icon you want on the frame
+
         ImageIcon iIcon = new ImageIcon(ClassLoader.getSystemResource("icons/customer.jpg"));
         Image anImage = iIcon.getImage().getScaledInstance(1000, 630, Image.SCALE_DEFAULT);
         ImageIcon iIcon2 = new ImageIcon(anImage);
         JLabel theLabel = new JLabel(iIcon2);
-        theLabel.setBounds(0, 0, 1100,630);
+        theLabel.setBounds(0, 0, 1100, 630);
         add(theLabel);
-        
+
         JLabel heading = new JLabel("Application Main Menu");
-        heading.setBounds(100, 100, 400,40);
+        heading.setBounds(100, 100, 400, 40);
         heading.setFont(new Font("Tahoma", Font.BOLD, 25));
         theLabel.add(heading);
-        
+
+        jbShowAll = new JButton("Show All Customers");
+        jbShowAll.setBounds(100, 160, 200, 40);
+        jbShowAll.addActionListener(this);
+        theLabel.add(jbShowAll);
+
         jbSearch = new JButton("Search Customer(s)");
-        jbSearch.setBounds(100, 200, 200,40);
+        jbSearch.setBounds(100, 210, 200, 40);
         jbSearch.addActionListener(this);
         theLabel.add(jbSearch);
-        
+
         jbAdd = new JButton("Add New Customer");
-        jbAdd.setBounds(100, 250, 200,40);
+        jbAdd.setBounds(100, 260, 200, 40);
         jbAdd.addActionListener(this);
         theLabel.add(jbAdd);
-                
+
         setSize(1120, 630);
         setLocation(250, 100);
         setVisible(true);
-    
     }
-    
+
     public void actionPerformed(ActionEvent ae) {
-        
-        if((ae.getSource()) == jbAdd) { 
-                new CustomerFrame();
-        } else if((ae.getSource()) == jbSearch) {
+        if (ae.getSource() == jbShowAll) {
+            List<BankCustomer> allCustomers = CustomerDTO.getAllCustomers();
+            if (allCustomers == null || allCustomers.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No customers found in the database.");
+            } else {
+                CustomerList listFrame = new CustomerList(allCustomers);
+                listFrame.setVisible(true);
+            }
+        } else if (ae.getSource() == jbAdd) {
+            new CustomerFrame();
+        } else if (ae.getSource() == jbSearch) {
             new CustomerSearch();
             this.setVisible(true);
         }
-        
     }
-    
-    //This main method is not needed, unless you want to run this class by itself from your IDE to validate its look'n feel
-    //This frame(window) will be called as a result of an action(click, select etc) from another widget on on another winhow during the GUI workflow
+
     public static void main(String[] args) {
-
         new HomePage();
-
     }
-    
+
 }

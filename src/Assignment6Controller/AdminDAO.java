@@ -40,11 +40,11 @@ public class AdminDAO {
 
 
     public HashMap getAdmin(String id) {
-        
+
         HashMap hm = null;
-        
+
         try {
-            
+            connection = DataConnection.getDBConnection();
             pStatement = connection.prepareStatement(AdminDataConnection.getSelect());
             pStatement.setString(1, id);
             result = pStatement.executeQuery();

@@ -147,7 +147,7 @@ public class CustomerFrame extends javax.swing.JFrame {
         String bDay = jTextField5.getText();
 
         HashMap hm = new HashMap<String, String>();
-        hm.put("fname", fname);
+        hm.put("firstName", fname);
         hm.put("lname", lname);
         hm.put("phone", phone);
         hm.put("email", email);
