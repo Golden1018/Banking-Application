@@ -1,6 +1,6 @@
 # Banking Application
 
-A Java-based banking application developed for CS413 Assignment 6. This desktop application allows users to manage bank accounts, customers, and transactions through a GUI interface.
+A Java desktop banking application developed for CS413 Assignment 6. Manages customers, bank accounts, and transactions through a Swing GUI, backed by a MySQL database.
 
 ## Features
 
@@ -8,7 +8,7 @@ A Java-based banking application developed for CS413 Assignment 6. This desktop 
 - Bank account management (checking and savings accounts)
 - Account transactions and transaction history
 - Customer address management
-- Admin functionality
+- Admin login
 
 ## Project Structure
 
@@ -18,17 +18,21 @@ src/
 │   ├── BankAccount.java
 │   ├── CheckingAccount.java
 │   ├── SavingsAccount.java
-│   └── CustomerAddress.java
+│   ├── BankCustomer.java
+│   ├── CustomerAddress.java
+│   └── BankAccountTransaction.java
 │
-├── Assignment6Controller/  # Business logic & database access
+├── Assignment6Controller/  # Database access (DAO pattern)
+│   ├── DataConnection.java
 │   ├── AccountDAO.java
 │   ├── CustomerDAO.java
 │   ├── AdminDAO.java
 │   ├── AccountTransactionDAO.java
-│   ├── CustomerAddressDAO.java
-│   └── DataConnection.java
+│   └── CustomerAddressDAO.java
 │
-└── Assignment6View/        # GUI screens
+└── Assignment6View/        # Swing GUI screens
+    ├── BankApplicationMain.java
+    ├── UserLogin.java
     ├── HomePage.java
     ├── CustomerFrame.java
     ├── CustomerList.java
@@ -41,25 +45,37 @@ src/
     └── CustomerAddressFrame.java
 ```
 
-## Technologies Used
+## Technologies
 
-- Java (Swing for GUI)
-- JDBC (database connectivity)
-- MVC Architecture (Model-View-Controller)
-- NetBeans IDE
+- Java 17 with Swing
+- JDBC + MySQL (`mysql-connector-j-9.6.0.jar`)
+- MVC architecture
 
-## How to Run
+## Prerequisites
+
+- JDK 17+
+- MySQL running on `localhost:3306`
+- A MySQL database named `CS413`
+
+## Setup
 
 1. Clone the repository:
    ```bash
    git clone https://github.com/Golden1018/Banking-Application.git
    ```
 
-2. Open the project in NetBeans IDE
+2. Create the database:
+   ```sql
+   CREATE DATABASE CS413;
+   ```
 
-3. Set up your database and update the connection settings in `DataConnection.java`
+3. Update credentials in `src/Assignment6Controller/DataConnection.java` if your MySQL username/password differ from the defaults (`root` / empty password).
 
-4. Build and run the project
+## Running in VS Code
+
+1. Install the [Extension Pack for Java](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack).
+2. Open the project folder in VS Code.
+3. Press **Run** (top-right) or **F5** — VS Code picks up `.vscode/launch.json` which includes the MySQL driver on the classpath automatically.
 
 ## Course
 
