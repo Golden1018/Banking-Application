@@ -1,6 +1,7 @@
 package Assignment6View;
 
 import Assignment6Controller.AccountDTO;
+import Assignment6Controller.AccountTransactionDTO;
 import Assignment6Controller.CustomerAddressDTO;
 import Assignment6Controller.CustomerDTO;
 import Assignment6Model.BankAccount;
@@ -8,6 +9,9 @@ import Assignment6Model.BankCustomer;
 import Assignment6Model.CustomerAddress;
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.*;
 
@@ -28,7 +32,7 @@ public class CustomerDetail extends JFrame implements ActionListener {
 
     private JButton saveBtn;
     private JButton updateAddressBtn;
-    private JButton showAccountsBtn;
+    private JButton addTransactionBtn;
     private JButton closeBtn;
 
     public CustomerDetail(BankCustomer customer) {
@@ -96,17 +100,17 @@ public class CustomerDetail extends JFrame implements ActionListener {
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         saveBtn = new JButton("Save");
         updateAddressBtn = new JButton("Update Address");
-        showAccountsBtn = new JButton("Show Accounts");
+        addTransactionBtn = new JButton("Add Transaction");
         closeBtn = new JButton("Close");
 
         saveBtn.addActionListener(this);
         updateAddressBtn.addActionListener(this);
-        showAccountsBtn.addActionListener(this);
+        addTransactionBtn.addActionListener(this);
         closeBtn.addActionListener(this);
 
         btnPanel.add(saveBtn);
         btnPanel.add(updateAddressBtn);
-        btnPanel.add(showAccountsBtn);
+        btnPanel.add(addTransactionBtn);
         btnPanel.add(closeBtn);
         add(btnPanel, BorderLayout.SOUTH);
 
@@ -130,9 +134,6 @@ public class CustomerDetail extends JFrame implements ActionListener {
         addressField.setText(addr != null ? addr.toString() : "No address on file");
     }
 
-    /**
-     * Saves updated customer data to the database.
-     */
     private void saveCustomer() {
         if (customer == null) return;
         customer.setFirstName(firstNameField.getText().trim());
@@ -148,18 +149,118 @@ public class CustomerDetail extends JFrame implements ActionListener {
         }
     }
 
-    /**
-     * Opens the AccountList frame showing accounts for this customer.
-     */
-    private void findCustomerAccounts() {
+    private void showAddTransactionDialog() {
         if (customer == null) return;
+
         List<BankAccount> accounts = AccountDTO.findAccountsByCustomerId(customer.getCustomerNumber());
         if (accounts == null || accounts.isEmpty()) {
             JOptionPane.showMessageDialog(this, "No accounts found for this customer.");
-        } else {
-            AccountList accountListFrame = new AccountList(accounts, customer);
-            accountListFrame.setVisible(true);
+            return;
         }
+
+        JDialog dialog = new JDialog(this, "Add Transaction", true);
+        dialog.setLayout(new BorderLayout(10, 10));
+
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setBorder(BorderFactory.createEmptyBorder(12, 16, 8, 16));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 6, 5, 6);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Account selector
+        gbc.gridx = 0; gbc.gridy = 0;
+        form.add(new JLabel("Account:"), gbc);
+        gbc.gridx = 1;
+        JComboBox<BankAccount> accountCombo = new JComboBox<>();
+        accountCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value,
+                    int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof BankAccount) {
+                    BankAccount a = (BankAccount) value;
+                    setText("Acct #" + a.getAccountNum() + " | " + a.getType()
+                            + " | $" + String.format("%.2f", a.getBalance()));
+                }
+                return this;
+            }
+        });
+        for (BankAccount a : accounts) accountCombo.addItem(a);
+        form.add(accountCombo, gbc);
+
+        // Transaction type
+        gbc.gridx = 0; gbc.gridy = 1;
+        form.add(new JLabel("Type:"), gbc);
+        gbc.gridx = 1;
+        JComboBox<String> typeCombo = new JComboBox<>(new String[]{"Deposit", "Withdraw", "Transfer"});
+        form.add(typeCombo, gbc);
+
+        // Amount
+        gbc.gridx = 0; gbc.gridy = 2;
+        form.add(new JLabel("Amount:"), gbc);
+        gbc.gridx = 1;
+        JTextField amountField = new JTextField(12);
+        form.add(amountField, gbc);
+
+        // Description
+        gbc.gridx = 0; gbc.gridy = 3;
+        form.add(new JLabel("Description:"), gbc);
+        gbc.gridx = 1;
+        JTextField descField = new JTextField(12);
+        form.add(descField, gbc);
+
+        dialog.add(form, BorderLayout.CENTER);
+
+        // Buttons
+        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 8));
+        JButton submitBtn = new JButton("Submit");
+        JButton cancelBtn = new JButton("Cancel");
+
+        submitBtn.addActionListener(ev -> {
+            BankAccount selectedAccount = (BankAccount) accountCombo.getSelectedItem();
+            String type = (String) typeCombo.getSelectedItem();
+            String amountText = amountField.getText().trim();
+            String desc = descField.getText().trim();
+
+            if (amountText.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Please enter an amount.");
+                return;
+            }
+            double amount;
+            try {
+                amount = Double.parseDouble(amountText);
+                if (amount <= 0) throw new NumberFormatException();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "Please enter a valid positive amount.");
+                return;
+            }
+
+            HashMap<String, Object> hm = new HashMap<>();
+            hm.put("id", selectedAccount.getAccountNum());
+            hm.put("type", type);
+            hm.put("amount", amount);
+            hm.put("summary", desc);
+            hm.put("createdate", new Timestamp(new Date().getTime()));
+
+            int result = AccountTransactionDTO.performCreate(hm);
+            if (result > 0) {
+                JOptionPane.showMessageDialog(dialog, "Transaction added successfully.");
+                dialog.dispose();
+            } else {
+                JOptionPane.showMessageDialog(dialog, "Failed to add transaction. Please try again.");
+            }
+        });
+
+        cancelBtn.addActionListener(ev -> dialog.dispose());
+
+        btnRow.add(submitBtn);
+        btnRow.add(cancelBtn);
+        dialog.add(btnRow, BorderLayout.SOUTH);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     @Override
@@ -171,8 +272,8 @@ public class CustomerDetail extends JFrame implements ActionListener {
                 CustomerAddressFrame addrFrame = new CustomerAddressFrame(customer);
                 addrFrame.setVisible(true);
             }
-        } else if (e.getSource() == showAccountsBtn) {
-            findCustomerAccounts();
+        } else if (e.getSource() == addTransactionBtn) {
+            showAddTransactionDialog();
         } else if (e.getSource() == closeBtn) {
             this.dispose();
         }
